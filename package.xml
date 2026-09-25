@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>s3vo_analysis</name>
+  <version>0.1.0</version>
+  <description>
+    Analysis tools for the S3VO bags. Includes a launch file that patches
+    the recorded bags with TF (odom -> base_link, and a common world frame
+    derived from the recorded GPS origins) since TF was not recorded.
+    This package never modifies the original bag files.
+  </description>
+
+  <maintainer email="kikopiressilva@gmail.com">Francisco Pires da Silva</maintainer>
+  <license>Apache 2.0</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>geographic_msgs</exec_depend>
+  <exec_depend>visualization_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>ros2bag</exec_depend>
+  <exec_depend>rosbag2_transport</exec_depend>
+  <exec_depend>avoa3d</exec_depend>
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
