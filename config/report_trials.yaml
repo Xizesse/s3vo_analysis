@@ -38,6 +38,7 @@ trials:
     bag: trial_headon_p_5
     title: Head-on encounter (run 2)
     short: Head-on 2
+    naut_panels: true            # NAUTILUS speed and heading, as in the crossing trials
     window: [null, null]
     aerial: {file: DJI_20260924143338_0006_V.MP4, offset: -0.4, crop: [300, 80, 1080, 720], times: null}
     foxglove: {file: headon.mp4, offset: 2.0, time: 9.0}
