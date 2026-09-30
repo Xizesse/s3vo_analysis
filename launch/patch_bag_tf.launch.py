@@ -18,9 +18,14 @@ This matches avoa3d/s3vo.launch.py's expectations (fixed_frame='world',
 agent_frame='base_link' for lily) while also placing nautilus consistently
 in the same world frame using its own recorded GPS origin.
 
+It also publishes nautilus's heading on /usv/nautilus/heading
+(std_msgs/Float64), extracted from the orientation in its odom -- compass
+degrees by default (0 = North, clockwise), see odom_heading_publisher.py.
+
 It also publishes the (reverse-engineered, not recorded) goal position as
-RViz markers: a small sphere at the goal and a line from lily's current
-position to it, both in the 'world' frame.
+markers: a sphere at the goal and a line from lily's origin to it, both
+expressed in lily's own 'base_link' frame and recomputed on every odometry
+message.
 
 Usage:
   ros2 bag play <bag_dir> --clock
@@ -49,6 +54,13 @@ def generate_launch_description():
         'nautilus_odom_topic', default_value='/usv/nautilus/mavros/local_position/odom')
     lily_gp_origin_topic = '/usv/lily/mavros/global_position/gp_origin'
     nautilus_gp_origin_topic = '/usv/nautilus/mavros/global_position/gp_origin'
+
+    nautilus_heading_topic_arg = DeclareLaunchArgument(
+        'nautilus_heading_topic', default_value='/usv/nautilus/heading')
+    heading_convention_arg = DeclareLaunchArgument(
+        'heading_convention', default_value='compass_deg',
+        description="'compass_deg' (0=North, CW, degrees) or 'enu_rad' "
+                    "(0=East, CCW, radians).")
 
     goal_latitude_arg = DeclareLaunchArgument('goal_latitude', default_value='41.6852940')
     goal_longitude_arg = DeclareLaunchArgument('goal_longitude', default_value='-8.8390284')
@@ -109,6 +121,19 @@ def generate_launch_description():
         }],
     )
 
+    nautilus_heading_node = Node(
+        package='s3vo_analysis',
+        executable='odom_heading_publisher',
+        name='nautilus_heading_publisher',
+        output='screen',
+        parameters=[{
+            'use_sim_time': use_sim_time,
+            'odom_topic': LaunchConfiguration('nautilus_odom_topic'),
+            'heading_topic': LaunchConfiguration('nautilus_heading_topic'),
+            'convention': LaunchConfiguration('heading_convention'),
+        }],
+    )
+
     goal_marker_node = Node(
         package='s3vo_analysis',
         executable='goal_marker_publisher',
@@ -119,6 +144,7 @@ def generate_launch_description():
             'goal_latitude': LaunchConfiguration('goal_latitude'),
             'goal_longitude': LaunchConfiguration('goal_longitude'),
             'reference_gp_origin_topic': lily_gp_origin_topic,
+            'agent_odom_topic': LaunchConfiguration('lily_odom_topic'),
             'world_frame': world_frame,
             'agent_frame': 'base_link',
         }],
@@ -129,11 +155,14 @@ def generate_launch_description():
         world_frame_arg,
         lily_odom_arg,
         nautilus_odom_arg,
+        nautilus_heading_topic_arg,
+        heading_convention_arg,
         goal_latitude_arg,
         goal_longitude_arg,
         gps_origin_tf_node,
         world_to_map_static_tf,
         lily_odom_tf_node,
         nautilus_odom_tf_node,
+        nautilus_heading_node,
         goal_marker_node,
     ])

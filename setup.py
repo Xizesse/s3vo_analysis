@@ -28,6 +28,7 @@ setup(
             'gps_origin_tf = s3vo_analysis.gps_origin_tf:main',
             'odom_reliable_relay = s3vo_analysis.odom_reliable_relay:main',
             'goal_marker_publisher = s3vo_analysis.goal_marker_publisher:main',
+            'odom_heading_publisher = s3vo_analysis.odom_heading_publisher:main',
         ],
     },
 )
