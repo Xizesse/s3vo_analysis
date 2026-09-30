@@ -7,6 +7,8 @@
 #   for aerial clips, and on the desired/cmd_vel curves for Foxglove captures).
 # aerial.times: seconds after Guided engagement of the frames shown in the aerial strip (null = CPA-relative defaults).
 # aerial.crop: [x, y, w, h] in source pixels (1920x1080).
+# naut_panels: optional; add NAUTILUS speed and heading panels to the time series.
+# naut_track_until: optional; seconds after start after which NAUTILUS's track is not drawn.
 # foxglove.keep_height: fraction of the panel height kept (default 0.72; 1.0 when samples go astern).
 # foxglove.time: seconds after Guided engagement of the velocity-space snapshot
 #   (null = strongest S3VO intervention near CPA). Chosen where desired_vel is visibly pruned.
@@ -30,6 +32,7 @@ trials:
     title: Head-on encounter (run 1)
     short: Head-on 1
     window: [null, null]
+    naut_track_until: 17.0       # NAUTILUS stops and turns back after passing; plot only its straight run
 
   - key: HeadonB
     bag: trial_headon_p_5
@@ -43,6 +46,7 @@ trials:
     bag: trial_stabord_p_4
     title: Starboard crossing
     short: Crossing
+    naut_panels: true            # NAUTILUS accelerates during the encounter
     window: [null, null]
     aerial: {file: DJI_20260924144806_0004_V.MP4, offset: -4.5, crop: [420, 200, 1080, 720], times: null}
     foxglove: {file: cross.mp4, offset: 1.9, time: 6.0}
@@ -51,6 +55,7 @@ trials:
     bag: trial_stabord_p_10
     title: Near-parallel converging
     short: Near-parallel
+    naut_panels: true            # NAUTILUS accelerates during the encounter
     window: [null, null]
     aerial: {file: DJI_20260924150059_0008_V.MP4, offset: -6.4, crop: [360, 340, 1080, 720], times: null}
     foxglove: {file: parallel.mp4, offset: 2.2, time: 6.0}

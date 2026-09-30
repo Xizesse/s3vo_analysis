@@ -156,6 +156,9 @@ def analyse(cfg, data_dir, tc):
         T=T, key=tc["key"], bag=tc["bag"], title=tc["title"], cfg=tc,
         t_s=t_s, t_e=t_e, auto_window=auto, t=t - t_s, lx=lx, ly=ly, nx=nx, ny=ny,
         naut_track=(tn - t_s, nx_all, ny_all), d=d, k=k, r_b=r_b, r_naut=r_naut,
+        # NAUTILUS speed and compass heading (deg, 0 = north, clockwise) from its broadcast odometry.
+        naut_speed_ts=np.hypot(N["vx"], N["vy"]),
+        naut_hdg_ts=np.degrees(np.unwrap(np.radians(90.0 - np.degrees(N["yaw"])))),
         p0=p0, goal=goal, cross_track=cross_track, deploy=deploy,
         durius=durius, durius_r=durius_r,
         tcmd=tcmd[mc] - t_s, cvx=cvx, cwz=cwz, dvx=dvx, dwz=dwz, acting=acting, dev=dev,
@@ -197,13 +200,16 @@ def shade_acting(ax, t, acting):
 
 
 def plot_timeseries(R, out):
-    fig = plt.figure(figsize=(7.0, 3.9))
-    gs = GridSpec(3, 2, figure=fig, width_ratios=[1.0, 1.25], wspace=0.28, hspace=0.18)
+    naut_panels = bool(R["cfg"].get("naut_panels"))
+    rows = 5 if naut_panels else 3
+    fig = plt.figure(figsize=(7.0, 5.4 if naut_panels else 3.9))
+    gs = GridSpec(rows, 2, figure=fig, width_ratios=[1.0, 1.25], wspace=0.28, hspace=0.18)
     ax = fig.add_subplot(gs[:, 0])
     p0 = R["goal"] if R["deploy"] else R["p0"]
     t, lx, ly = R["t"], R["lx"] - p0[0], R["ly"] - p0[1]
     tn, nx, ny = R["naut_track"]
-    mn = (tn >= -1.0) & (tn <= t[-1] + 1.0)
+    t_naut = min(t[-1] + 1.0, R["cfg"].get("naut_track_until") or np.inf)
+    mn = (tn >= -1.0) & (tn <= t_naut)
     g = R["goal"] - p0
     if R["deploy"]:
         if R["durius"] is not None:
@@ -222,8 +228,9 @@ def plot_timeseries(R, out):
     for ts in np.arange(0, t[-1], 5.0):
         i = np.searchsorted(t, ts)
         ax.plot(lx[i], ly[i], "o", ms=3.2, mfc="white", mec=LILY_C, mew=0.9, zorder=4)
-        ax.plot(np.interp(ts, tn, nx) - p0[0], np.interp(ts, tn, ny) - p0[1], "s", ms=3.0,
-                mfc="white", mec=NAUT_C, mew=0.9, zorder=4)
+        if ts <= t_naut:
+            ax.plot(np.interp(ts, tn, nx) - p0[0], np.interp(ts, tn, ny) - p0[1], "s", ms=3.0,
+                    mfc="white", mec=NAUT_C, mew=0.9, zorder=4)
     k = R["k"]
     cx, cy = R["nx"][k] - p0[0], R["ny"][k] - p0[1]
     ax.plot([lx[k], cx], [ly[k], cy], color=INK, lw=0.8, zorder=5)
@@ -238,11 +245,22 @@ def plot_timeseries(R, out):
     ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.13), ncol=2, frameon=False, handlelength=1.6)
 
     ax1 = fig.add_subplot(gs[0, 1])
-    ax2 = fig.add_subplot(gs[1, 1], sharex=ax1)
-    ax3 = fig.add_subplot(gs[2, 1], sharex=ax1)
+    extra = [fig.add_subplot(gs[1 + i, 1], sharex=ax1) for i in range(2)] if naut_panels else []
+    ax2 = fig.add_subplot(gs[rows - 2, 1], sharex=ax1)
+    ax3 = fig.add_subplot(gs[rows - 1, 1], sharex=ax1)
     tc = R["tcmd"]
     tcpa = R["metrics"]["tcpa"]
-    for a in (ax1, ax2, ax3):
+    if naut_panels:
+        axs, axh = extra
+        mw = (tn >= -1.0) & (tn <= t[-1] + 1.0)
+        axs.plot(tn[mw], R["naut_speed_ts"][mw], color=NAUT_C, lw=1.4)
+        axs.set_ylabel("NAUTILUS\nspeed [m/s]")
+        axs.set_ylim(0, None)
+        hdg = R["naut_hdg_ts"][mw]
+        hdg = hdg - 360.0 * np.floor(np.median(hdg) / 360.0)  # unwrapped, shifted into [0, 360)
+        axh.plot(tn[mw], hdg, color=NAUT_C, lw=1.4)
+        axh.set_ylabel("NAUTILUS\nheading [deg]")
+    for a in [ax1, *extra, ax2, ax3]:
         shade_acting(a, tc, R["acting"])
         a.axvline(tcpa, color=INK2, lw=0.7, ls=":")
     ax1.plot(t, R["d"], color=INK, lw=1.4)
@@ -257,11 +275,11 @@ def plot_timeseries(R, out):
     ax3.plot(tc, R["dwz"], color=MUTED, ls="--", lw=1.2)
     ax3.plot(tc, R["cwz"], color=LILY_C, lw=1.4)
     ax3.set_ylabel("Yaw rate [rad/s]")
-    ax3.set_xlabel("Time since Guided engaged [s]")
-    for a in (ax1, ax2):
+    ax3.set_xlabel("Time [s]")
+    for a in [ax1, *extra, ax2]:
         plt.setp(a.get_xticklabels(), visible=False)
     ax1.set_xlim(0, t[-1])
-    fig.align_ylabels([ax1, ax2, ax3])
+    fig.align_ylabels([ax1, *extra, ax2, ax3])
     fig.savefig(out, bbox_inches="tight")
     plt.close(fig)
 
