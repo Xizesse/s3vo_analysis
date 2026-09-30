@@ -1,0 +1,80 @@
+# Trials used in the report's Real-World Validation section (see bags/bag_video_mapping.csv).
+#
+# All times are seconds relative to the first LILY odometry message of the bag.
+# window: [start, end] of the autonomous (Guided) run; null = auto-detect from the
+#   thruster commands (start of the last sustained non-zero segment, end = last change).
+# *.offset: video_time = bag_time + offset (synced by hand on the closest approach
+#   for aerial clips, and on the desired/cmd_vel curves for Foxglove captures).
+# aerial.times: seconds after Guided engagement of the frames shown in the aerial strip (null = CPA-relative defaults).
+# aerial.crop: [x, y, w, h] in source pixels (1920x1080).
+# foxglove.keep_height: fraction of the panel height kept (default 0.72; 1.0 when samples go astern).
+# foxglove.time: seconds after Guided engagement of the velocity-space snapshot
+#   (null = strongest S3VO intervention near CPA). Chosen where desired_vel is visibly pruned.
+
+goal_enu: [-57.762, 82.888]      # reconstruct_goal_position.py, LILY local ENU
+lily_radius: 1.5                 # avoa3d vehicle_radius
+danger_margin: 1.0               # avoa3d danger_margin
+videos_dir: ~/Videos/S3VO
+
+trials:
+  - key: Static
+    bag: trial_static_p_1
+    title: Static obstacle
+    short: Static
+    window: [102.0, null]        # 78-100 s: thrust bursts while LILY was pivoted/lined up
+    aerial: {file: DJI_20260924141735_0001_V.MP4, offset: -55.0, crop: [240, 180, 1080, 720], times: null}
+    foxglove: {file: static.mp4, offset: -6.3, time: 10.0}
+
+  - key: HeadonA
+    bag: trial_headon_p_1
+    title: Head-on encounter (run 1)
+    short: Head-on 1
+    window: [null, null]
+
+  - key: HeadonB
+    bag: trial_headon_p_5
+    title: Head-on encounter (run 2)
+    short: Head-on 2
+    window: [null, null]
+    aerial: {file: DJI_20260924143338_0006_V.MP4, offset: -0.4, crop: [300, 80, 1080, 720], times: null}
+    foxglove: {file: headon.mp4, offset: 2.0, time: 9.0}
+
+  - key: Cross
+    bag: trial_stabord_p_4
+    title: Starboard crossing
+    short: Crossing
+    window: [null, null]
+    aerial: {file: DJI_20260924144806_0004_V.MP4, offset: -4.5, crop: [420, 200, 1080, 720], times: null}
+    foxglove: {file: cross.mp4, offset: 1.9, time: 6.0}
+
+  - key: Parallel
+    bag: trial_stabord_p_10
+    title: Near-parallel converging
+    short: Near-parallel
+    window: [null, null]
+    aerial: {file: DJI_20260924150059_0008_V.MP4, offset: -6.4, crop: [360, 340, 1080, 720], times: null}
+    foxglove: {file: parallel.mp4, offset: 2.2, time: 6.0}
+
+  # Deployment scenario: LILY holds a deployment point next to DURIUS while NAUTILUS
+  # transits through it. goal_enu = deployment point, reconstructed from deploy_p_6's
+  # desired_vel (same bearing method as reconstruct_goal_position.py); the RL run ends
+  # 2.4 m from it, consistent with the same waypoint.
+  - key: DeployP
+    bag: deploy_p_6
+    type: deploy
+    title: Deployment (proportional navigator)
+    short: Deploy (P)
+    goal_enu: [-24.57, 124.76]
+    window: [null, null]
+    aerial: {file: DJI_20260924155301_0006_V.MP4, offset: -10.5, crop: [480, 0, 1080, 720], times: null}
+    foxglove: {file: deploy_p.mp4, offset: 1.0, time: 6.0, keep_height: 1.0}
+
+  - key: DeployRL
+    bag: deploy_rl_1
+    type: deploy
+    title: Deployment (RL navigator)
+    short: Deploy (RL)
+    goal_enu: [-24.57, 124.76]
+    window: [null, null]
+    aerial: {file: DJI_20260924155933_0007_V.MP4, offset: 0.5, crop: [480, 0, 1080, 720], times: null}
+    foxglove: {file: deploy_rl.mp4, offset: 2.5, time: 6.0, keep_height: 1.0}
